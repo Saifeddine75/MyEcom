@@ -36,8 +36,6 @@ app.openapi_schema["components"]["securitySchemes"] = {
 
 models.models.Base.metadata.create_all(bind=engine)
 
-memory_db = {"products": []}
-
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     print(f"🧐 Requête reçue: {request.method} {request.url}")

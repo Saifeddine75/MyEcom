@@ -1,5 +1,6 @@
 import models
 from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP, text
+from sqlalchemy.orm import relationship
 from database import Base
 
 class User(Base):
@@ -9,3 +10,5 @@ class User(Base):
     email = Column(String, unique=True, nullable=False)
     password = Column(String, nullable=False)
     created_at = Column(TIMESTAMP(timezone=True), server_default=text('now()'), nullable=False)
+
+    profile = relationship("Profile", back_populates="user", uselist=False, cascade="all, delete-orphan")
