@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import models
 from database import engine
 import models.models
-from routers import user, auth
+from routers import user, auth, category
 from fastapi.openapi.utils import get_openapi
 
 app = FastAPI()
@@ -12,6 +12,7 @@ app = FastAPI()
 # Include the routers
 app.include_router(user.router)
 app.include_router(auth.router)
+app.include_router(category.router)
 
 origins = [
     "http://localhost:3000"

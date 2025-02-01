@@ -13,6 +13,9 @@ router = APIRouter(prefix="/users", tags=["Users"])
 
 @router.post("/", response_model=user_out.UserOut, status_code=201)
 def create_user(user: user_create.UserCreate, db: Session = Depends(get_db)):
+    user = db.query(models.user.User).filter(models.user.User.email == user.email).first()
+    if user:
+         raise HTTPException(status_code=400, detail="User with same email already exists !")
     hashed_password = hash_password(user.password)
     new_user = models.user.User(email=user.email, password=hashed_password)
     db.add(new_user)
@@ -25,8 +28,7 @@ async def get_user( id: int, user_token = Depends(verify_access_token), db: Sess
     print(f"🔍 DEBUG: Token reçu dans l'endpoint: {user_token}")
     user = db.query(models.user.User).filter(models.user.User.id == id).first()
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No User Found")
-    
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No User Found")    
     return user
 
 @router.post("/{id}/profile/", response_model=profile_out.ProfileOut, status_code=201)
@@ -34,18 +36,15 @@ def create_profile(id:int, profile: profile_create.ProfileCreate, user_token = D
     print(f"🔍 DEBUG: Token reçu dans l'endpoint: {user_token}")
     user = db.query(models.user.User).filter(models.user.User.id == id).first()
     if not user:
-        raise HTTPException(status_code=404, detail="No User Found")
-    
+        raise HTTPException(status_code=404, detail="No User Found") 
     is_exist = db.query(models.profile.Profile).filter(models.profile.Profile.user_id == id).first()
     if is_exist:
-        raise HTTPException(status_code=400, detail="Profile already exists : please try updating")
-    
+        raise HTTPException(status_code=400, detail="Profile already exists : please try updating")    
     new_profile = models.profile.Profile(phone_number=profile.phone_number,
                                          country=profile.country,
                                          postal_address=profile.postal_address,
                                          user_id = id
-                                         )
-    
+                                         )   
     db.add(new_profile)
     db.commit()
     db.refresh(new_profile)
