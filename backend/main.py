@@ -1,21 +1,17 @@
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from typing import List
-
-
-class Product(BaseModel):
-    id:int
-    name:str
-    price:int
-
-class Products(BaseModel):
-    products: List[Product]
-
-
+import models
+from database import engine
+import models.models
+from routers import user, auth
+from fastapi.openapi.utils import get_openapi
 
 app = FastAPI()
+
+# Include the routers
+app.include_router(user.router)
+app.include_router(auth.router)
 
 origins = [
     "http://localhost:3000"
@@ -28,12 +24,26 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"])
 
+
+app.openapi_schema = app.openapi()
+app.openapi_schema["components"]["securitySchemes"] = {
+    "OAuth2PasswordBearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+    }
+}
+
+models.models.Base.metadata.create_all(bind=engine)
+
 memory_db = {"products": []}
 
-
-@app.get("/product", response_model=Product)
-def get_product():
-    return Product(id=0, name="Bonjour", price=100)
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    print(f"🧐 Requête reçue: {request.method} {request.url}")
+    print(f"🛑 Headers: {request.headers}")
+    response = await call_next(request)
+    return response
 
 
 if __name__ == "__main__":
